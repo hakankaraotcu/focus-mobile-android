@@ -5,11 +5,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
@@ -148,35 +150,38 @@ fun QuestCard(
 
 @Preview(showBackground = true)
 @Composable
-fun QuestListPreview() {
+fun QuestCardPreview() {
     FocusQuestTheme {
-//        QuestList(
-//            questList = listOf(
-//                Quest(
-//                    "Meditasyon yap",
-//                    1,
-//                    5,
-//                    false
-//                ),
-//                Quest(
-//                    "Spor yap",
-//                    2,
-//                    10,
-//                    false
-//                ),
-//                Quest(
-//                    "Bir şey öğren",
-//                    3,
-//                    15,
-//                    false
-//                ),
-//                Quest(
-//                    "Kitap oku",
-//                    4,
-//                    20,
-//                    false
-//                )
-//            )
-//        )
+        QuestCard(
+            quest = Quest(
+                id = 1,
+                name = "Example Quest",
+                energyCost = 3,
+                expReward = 15,
+                isComplete = false
+            ),
+            onCompleteButtonClick = {}
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun QuestsListPreview() {
+    FocusQuestTheme {
+        val sampleQuests = listOf(
+            IndexedValue(0, Quest(1, "Stretch", 2, 10, false)),
+            IndexedValue(1, Quest(2, "Read a Book", 3, 15, false))
+        )
+
+        LazyColumn(modifier = Modifier.fillMaxSize()) {
+            questsList(
+                sectionTitle = "Today's Quests",
+                emptyQuestText = "No quests left!",
+                emptyQuestImage = R.drawable.complete, // varsayılan görsel olmalı
+                quests = sampleQuests,
+                onCompleteButtonClick = {}
+            )
+        }
     }
 }

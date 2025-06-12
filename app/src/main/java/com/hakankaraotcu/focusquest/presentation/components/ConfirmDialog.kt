@@ -4,6 +4,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
+import com.hakankaraotcu.focusquest.ui.theme.FocusQuestTheme
 
 @Composable
 fun ConfirmDialog(
@@ -28,5 +30,18 @@ fun ConfirmDialog(
                     Text(text = "Confirm")
                 }
             })
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun ConfirmDialogPreview() {
+    FocusQuestTheme {
+        ConfirmDialog(
+            isOpen = true,
+            title = "Are You Sure?",
+            onDismissRequest = {},
+            onConfirmButtonClick = {}
+        )
     }
 }
