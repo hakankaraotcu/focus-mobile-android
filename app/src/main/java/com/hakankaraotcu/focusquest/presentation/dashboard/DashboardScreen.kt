@@ -11,14 +11,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -32,13 +30,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.hakankaraotcu.focusquest.GameViewModel
 import com.hakankaraotcu.focusquest.GameViewModelFactory
 import com.hakankaraotcu.focusquest.R
-import com.hakankaraotcu.focusquest.domain.model.Quest
 import com.hakankaraotcu.focusquest.presentation.components.ConfirmDialog
+import com.hakankaraotcu.focusquest.presentation.components.LevelProgressBar
 import com.hakankaraotcu.focusquest.presentation.components.questsList
 import com.hakankaraotcu.focusquest.ui.theme.FocusQuestTheme
 
@@ -48,45 +45,12 @@ fun DashboardScreen() {
     val viewModel: GameViewModel = viewModel(
         factory = GameViewModelFactory(application)
     )
+    val profile by viewModel.profile
+    var uiLevel by remember { mutableIntStateOf(profile.level) }
+    var uiExp by remember { mutableIntStateOf(profile.exp) }
+    var uiExpMax by remember { mutableIntStateOf(profile.expForNextLevel()) }
     val quests = viewModel.quests
     val energy = viewModel.getEnergy()
-    val level = viewModel.getLevel()
-    val exp = viewModel.getExp()
-    val expMax = viewModel.getExpForNextLevel()
-
-
-//    val quests = remember {
-//        mutableStateListOf(
-//            Quest(
-//                1,
-//                "Meditasyon yap",
-//                1,
-//                5,
-//                false
-//            ),
-//            Quest(
-//                2,
-//                "Spor yap",
-//                2,
-//                10,
-//                false
-//            ),
-//            Quest(
-//                3,
-//                "Bir şey öğren",
-//                3,
-//                15,
-//                false
-//            ),
-//            Quest(
-//                4,
-//                "Kitap oku",
-//                4,
-//                20,
-//                false
-//            )
-//        )
-//    }
 
     var isConfirmDialogOpen by rememberSaveable { mutableStateOf(false) }
     var selectedQuestIndex by rememberSaveable { mutableIntStateOf(-1) }
@@ -96,8 +60,17 @@ fun DashboardScreen() {
         onDismissRequest = { isConfirmDialogOpen = false },
         onConfirmButtonClick = {
             if (selectedQuestIndex != -1) {
-                viewModel.completeQuest(selectedQuestIndex)
-                //quests[selectedQuestIndex] = quests[selectedQuestIndex].copy(isComplete = true)
+                viewModel.completeQuest(
+                    index = selectedQuestIndex,
+                    onExpUpdate = { level, exp, expMax ->
+                        uiLevel = level
+                        uiExp = exp
+                        uiExpMax = expMax
+                    },
+                    onComplete = {
+                        // Görev tamamlandıktan sonra yapılacak ek işlemler
+                    }
+                )
             }
             isConfirmDialogOpen = false
         }
@@ -112,12 +85,14 @@ fun DashboardScreen() {
         )
         Scaffold(
             topBar = {
-                DashboardScreenTopBar(
-                    energy = energy,
-                    level = level,
-                    exp = exp,
-                    maxExp = expMax
-                )
+                Column {
+                    DashboardScreenTopBar(
+                        energy = energy,
+                        level = uiLevel,
+                        exp = uiExp,
+                        maxExp = uiExpMax
+                    )
+                }
             },
             containerColor = Color.Transparent
         ) { paddingValues ->
@@ -180,16 +155,17 @@ fun DashboardScreenTopBar(energy: Int, level: Int, exp: Int, maxExp: Int) {
         },
         title = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    text = "Focus Quest",
-                    color = Color.White,
-                    style = MaterialTheme.typography.headlineMedium
-                )
-                Text(
-                    text = "Level $level - Exp $exp/$maxExp",
-                    color = Color.White,
-                    fontSize = 12.sp
-                )
+//                Text(
+//                    text = "Focus Quest",
+//                    color = Color.White,
+//                    style = MaterialTheme.typography.headlineMedium
+//                )
+//                Text(
+//                    text = "Level $level - Exp $exp/$maxExp",
+//                    color = Color.White,
+//                    fontSize = 12.sp
+//                )
+                LevelProgressBar(level = level, exp = exp, expForNextLevel = maxExp)
             }
         },
         actions = {

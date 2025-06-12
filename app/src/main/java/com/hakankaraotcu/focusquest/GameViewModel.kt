@@ -1,14 +1,10 @@
 package com.hakankaraotcu.focusquest
 
 import android.app.Application
-import android.content.Context
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hakankaraotcu.focusquest.domain.model.Profile
 import com.hakankaraotcu.focusquest.domain.model.Quest
@@ -17,8 +13,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
-    var profile by mutableStateOf(Profile())
-        private set
+    private val _profile = mutableStateOf(Profile())
+    val profile: State<Profile> = _profile
 
     var quests = mutableStateListOf(
         Quest(
@@ -98,26 +94,84 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun startEnergyRegeneration() {
         viewModelScope.launch {
             while (true) {
-                delay(30_000L) // 30 saniye
-                if (profile.energy < maxEnergy) {
-                    profile = profile.copy(energy = profile.energy + 1)
+                delay(30_000L) // 30 saniye (test için, sonra artacak)
+                val current = _profile.value
+                if (current.energy < maxEnergy) {
+                    _profile.value = current.copy(energy = current.energy + 1)
                 }
             }
         }
     }
 
-    fun completeQuest(index: Int) {
+    fun completeQuest(index: Int, onExpUpdate: (Int, Int, Int) -> Unit, onComplete: () -> Unit) {
         val quest = quests[index]
-        if (!quest.isComplete && profile.energy >= quest.energyCost) {
-            profile = profile.copy() // recomposition trigger
-            profile.consumeEnergy(quest.energyCost)
-            profile.addExp(quest.expReward)
+        val current = _profile.value
+
+        if (!quest.isComplete && current.energy >= quest.energyCost) {
+            // Enerji güncelle
+            _profile.value = current.copy(
+                energy = current.energy - quest.energyCost
+            )
+
+            // Görevi tamamla
             quests[index] = quest.copy(isComplete = true)
+
+            animateExpGain(
+                amount = quest.expReward,
+                onExpUpdate = onExpUpdate,
+                onComplete = onComplete
+            )
         }
     }
 
-    fun getEnergy(): Int = profile.energy
-    fun getLevel(): Int = profile.level
-    fun getExp(): Int = profile.exp
-    fun getExpForNextLevel(): Int = profile.expForNextLevel()
+    fun animateExpGain(amount: Int, onExpUpdate: (Int, Int, Int) -> Unit, onComplete: () -> Unit) {
+        viewModelScope.launch {
+            var remainingExp = amount
+            var localProfile = _profile.value
+
+            while (remainingExp > 0) {
+                val expForNext = localProfile.expForNextLevel()
+                val expToLevelUp = expForNext - localProfile.exp
+                val gain = minOf(remainingExp, expToLevelUp)
+
+                // XP artır
+                localProfile = localProfile.copy(exp = localProfile.exp + gain)
+                remainingExp -= gain
+
+                // Önce Xp barı dolsun (eğer seviye atlama gerekiyorsa)
+                onExpUpdate(
+                    localProfile.level,
+                    localProfile.exp,
+                    localProfile.expForNextLevel()
+                )
+
+                delay(600)
+
+                if (localProfile.exp >= expForNext) {
+                    // XP bar doldu, şimdi seviye atla ve sıfırla
+                    localProfile = localProfile.copy(
+                        level = localProfile.level + 1,
+                        exp = 0
+                    )
+
+                    onExpUpdate(
+                        localProfile.level,
+                        localProfile.exp,
+                        localProfile.expForNextLevel()
+                    )
+
+                    delay(600)
+                }
+
+                _profile.value = localProfile
+            }
+
+            onComplete()
+        }
+    }
+
+    fun getEnergy(): Int = profile.value.energy
+    fun getLevel(): Int = profile.value.level
+    fun getExp(): Int = profile.value.exp
+    fun getExpForNextLevel(): Int = profile.value.expForNextLevel()
 }
