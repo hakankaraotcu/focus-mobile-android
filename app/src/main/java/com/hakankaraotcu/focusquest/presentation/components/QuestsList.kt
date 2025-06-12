@@ -39,15 +39,18 @@ import com.hakankaraotcu.focusquest.ui.theme.FocusQuestTheme
 fun LazyListScope.questsList(
     sectionTitle: String,
     emptyQuestText: String,
-    quests: List<Quest>
+    emptyQuestImage: Int,
+    quests: List<IndexedValue<Quest>>,
+    onCompleteButtonClick: (Int) -> Unit
 ) {
     item {
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = sectionTitle,
             color = Color.White,
             fontWeight = FontWeight.Bold,
             style = MaterialTheme.typography.bodySmall,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
         )
     }
     if (quests.isEmpty()) {
@@ -58,10 +61,11 @@ fun LazyListScope.questsList(
             ) {
                 Image(
                     modifier = Modifier.size(120.dp),
-                    painter = painterResource(R.drawable.uncomplete),
+                    painter = painterResource(emptyQuestImage),
                     contentDescription = emptyQuestText
                 )
                 Spacer(modifier = Modifier.height(12.dp))
+
                 Text(
                     text = emptyQuestText,
                     style = MaterialTheme.typography.bodySmall,
@@ -73,24 +77,21 @@ fun LazyListScope.questsList(
             }
         }
     }
-    items(quests) { quest ->
+    items(quests, key = { it.value.id }) { indexedQuest ->
         QuestCard(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            quest = quest
+            quest = indexedQuest.value,
+            onCompleteButtonClick = { onCompleteButtonClick(indexedQuest.index) }
         )
     }
-    /*
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-        items(questList) {
-            QuestRow(quest = it)
-        }
-    }
-
-     */
 }
 
 @Composable
-fun QuestCard(modifier: Modifier = Modifier, quest: Quest) {
+fun QuestCard(
+    modifier: Modifier = Modifier,
+    quest: Quest,
+    onCompleteButtonClick: () -> Unit
+) {
     ElevatedCard(
         modifier = modifier,
         colors = CardColors(
@@ -134,9 +135,8 @@ fun QuestCard(modifier: Modifier = Modifier, quest: Quest) {
             if (!quest.isComplete) {
                 Button(
                     colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray),
-                    onClick = {
-                        quest.isComplete = true
-                    }) {
+                    onClick = onCompleteButtonClick
+                ) {
                     Text(text = "Complete")
                 }
             } else {
