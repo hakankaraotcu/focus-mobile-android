@@ -33,7 +33,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.hakankaraotcu.focusquest.R
-import com.hakankaraotcu.focusquest.model.Quest
+import com.hakankaraotcu.focusquest.domain.model.Quest
 import com.hakankaraotcu.focusquest.ui.theme.FocusQuestTheme
 
 fun LazyListScope.questsList(
@@ -119,12 +119,12 @@ fun QuestCard(
                 Spacer(modifier = Modifier.height(4.dp))
                 Row {
                     Text(
-                        text = "Energy: ${quest.energy}",
+                        text = "Energy: ${quest.energyCost}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.width(16.dp))
                     Text(
-                        text = "Exp: ${quest.exp}",
+                        text = "Exp: ${quest.expReward}",
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }

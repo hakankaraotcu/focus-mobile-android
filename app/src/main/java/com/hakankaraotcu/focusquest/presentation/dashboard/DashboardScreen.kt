@@ -1,7 +1,9 @@
 package com.hakankaraotcu.focusquest.presentation.dashboard
 
+import android.app.Application
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -25,50 +27,66 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.hakankaraotcu.focusquest.GameViewModel
+import com.hakankaraotcu.focusquest.GameViewModelFactory
 import com.hakankaraotcu.focusquest.R
-import com.hakankaraotcu.focusquest.model.Quest
+import com.hakankaraotcu.focusquest.domain.model.Quest
 import com.hakankaraotcu.focusquest.presentation.components.ConfirmDialog
 import com.hakankaraotcu.focusquest.presentation.components.questsList
 import com.hakankaraotcu.focusquest.ui.theme.FocusQuestTheme
 
 @Composable
 fun DashboardScreen() {
-    val quests = remember {
-        mutableStateListOf(
-            Quest(
-                1,
-                "Meditasyon yap",
-                1,
-                5,
-                false
-            ),
-            Quest(
-                2,
-                "Spor yap",
-                2,
-                10,
-                false
-            ),
-            Quest(
-                3,
-                "Bir şey öğren",
-                3,
-                15,
-                false
-            ),
-            Quest(
-                4,
-                "Kitap oku",
-                4,
-                20,
-                false
-            )
-        )
-    }
+    val application = LocalContext.current.applicationContext as Application
+    val viewModel: GameViewModel = viewModel(
+        factory = GameViewModelFactory(application)
+    )
+    val quests = viewModel.quests
+    val energy = viewModel.getEnergy()
+    val level = viewModel.getLevel()
+    val exp = viewModel.getExp()
+    val expMax = viewModel.getExpForNextLevel()
+
+
+//    val quests = remember {
+//        mutableStateListOf(
+//            Quest(
+//                1,
+//                "Meditasyon yap",
+//                1,
+//                5,
+//                false
+//            ),
+//            Quest(
+//                2,
+//                "Spor yap",
+//                2,
+//                10,
+//                false
+//            ),
+//            Quest(
+//                3,
+//                "Bir şey öğren",
+//                3,
+//                15,
+//                false
+//            ),
+//            Quest(
+//                4,
+//                "Kitap oku",
+//                4,
+//                20,
+//                false
+//            )
+//        )
+//    }
 
     var isConfirmDialogOpen by rememberSaveable { mutableStateOf(false) }
     var selectedQuestIndex by rememberSaveable { mutableIntStateOf(-1) }
@@ -78,7 +96,8 @@ fun DashboardScreen() {
         onDismissRequest = { isConfirmDialogOpen = false },
         onConfirmButtonClick = {
             if (selectedQuestIndex != -1) {
-                quests[selectedQuestIndex] = quests[selectedQuestIndex].copy(isComplete = true)
+                viewModel.completeQuest(selectedQuestIndex)
+                //quests[selectedQuestIndex] = quests[selectedQuestIndex].copy(isComplete = true)
             }
             isConfirmDialogOpen = false
         }
@@ -92,7 +111,14 @@ fun DashboardScreen() {
             modifier = Modifier.fillMaxSize()
         )
         Scaffold(
-            topBar = { DashboardScreenTopBar() },
+            topBar = {
+                DashboardScreenTopBar(
+                    energy = energy,
+                    level = level,
+                    exp = exp,
+                    maxExp = expMax
+                )
+            },
             containerColor = Color.Transparent
         ) { paddingValues ->
             LazyColumn(
@@ -115,9 +141,10 @@ fun DashboardScreen() {
                     emptyQuestText = "Did you really try today?\nI have a feeling you've gotten a little lazy...",
                     emptyQuestImage = R.drawable.complete,
                     quests = quests.withIndex().filter { it.value.isComplete },
-                    onCompleteButtonClick = { index ->
-                        selectedQuestIndex = index
-                        isConfirmDialogOpen = true
+                    onCompleteButtonClick = {
+//                        index ->
+//                        selectedQuestIndex = index
+//                        isConfirmDialogOpen = true
                     }
                 )
             }
@@ -127,7 +154,7 @@ fun DashboardScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardScreenTopBar() {
+fun DashboardScreenTopBar(energy: Int, level: Int, exp: Int, maxExp: Int) {
     CenterAlignedTopAppBar(
         navigationIcon = {
             IconButton(onClick = {
@@ -144,7 +171,7 @@ fun DashboardScreenTopBar() {
                     Text(
                         modifier = Modifier
                             .align(Alignment.BottomEnd),
-                        text = "10",
+                        text = "$energy",
                         color = Color.White,
                         fontWeight = FontWeight.Bold
                     )
@@ -152,11 +179,18 @@ fun DashboardScreenTopBar() {
             }
         },
         title = {
-            Text(
-                text = "Focus Quest",
-                color = Color.White,
-                style = MaterialTheme.typography.headlineMedium
-            )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = "Focus Quest",
+                    color = Color.White,
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Text(
+                    text = "Level $level - Exp $exp/$maxExp",
+                    color = Color.White,
+                    fontSize = 12.sp
+                )
+            }
         },
         actions = {
             IconButton(onClick = {
