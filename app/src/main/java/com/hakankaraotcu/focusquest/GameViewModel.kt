@@ -9,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.hakankaraotcu.focusquest.domain.model.Profile
 import com.hakankaraotcu.focusquest.domain.model.Quest
 import com.hakankaraotcu.focusquest.util.ResetHelper
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -16,51 +17,53 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val _profile = mutableStateOf(Profile())
     val profile: State<Profile> = _profile
 
-    var quests = mutableStateListOf(
-        Quest(
-            1,
-            "Yatağını topla",
-            1,
-            5,
-            false
-        ),
-        Quest(
-            2,
-            "Meditasyon yap",
-            2,
-            10,
-            false
-        ),
-        Quest(
-            3,
-            "Spor yap",
-            3,
-            15,
-            false
-        ),
-        Quest(
-            4,
-            "Bir şey öğren",
-            4,
-            20,
-            false
-        ),
-        Quest(
-            5,
-            "Kitap oku",
-            5,
-            50,
-            false
-        )
-    )
-        private set
+    private var expAnimationJob: Job? = null
 
-    private val maxEnergy = 10
+    private var remainingExpGlobal = 0
+    private var profileSnapshot = _profile.value
+
+    private val _quests = mutableStateOf<List<Quest>>(emptyList())
+    val quests: State<List<Quest>> = _quests
 
     init {
         //checkDailyReset() // sonra aktifleştir şimdilik gerek yok
-        startEnergyRegeneration()
         //startResetTimer() // test için
+        loadSampleQuests()
+    }
+
+    private fun loadSampleQuests() {
+        _quests.value = listOf(
+            Quest(
+                1,
+                "Yatağını topla",
+                5,
+                false
+            ),
+            Quest(
+                2,
+                "Meditasyon yap",
+                10,
+                false
+            ),
+            Quest(
+                3,
+                "Spor yap",
+                15,
+                false
+            ),
+            Quest(
+                4,
+                "Bir şey öğren",
+                20,
+                false
+            ),
+            Quest(
+                5,
+                "Kitap oku",
+                50,
+                false
+            )
+        )
     }
 
     // test için
@@ -84,93 +87,95 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun resetDailyQuests() {
-        quests.forEachIndexed { index, quest ->
-            if (quest.isComplete) {
-                quests[index] = quest.copy(isComplete = false)
-            }
+        _quests.value = _quests.value.map { quest ->
+            if (quest.isComplete) quest.copy(isComplete = false) else quest
         }
     }
 
-    private fun startEnergyRegeneration() {
-        viewModelScope.launch {
-            while (true) {
-                delay(30_000L) // 30 saniye (test için, sonra artacak)
-                val current = _profile.value
-                if (current.energy < maxEnergy) {
-                    _profile.value = current.copy(energy = current.energy + 1)
-                }
+    fun completeQuest(
+        index: Int,
+        onExpUpdate: (Int, Int, Int) -> Unit,
+        onLevelUp: (Int) -> Unit,
+        onComplete: () -> Unit
+    ) {
+        val quest = _quests.value[index]
+
+        if (!quest.isComplete) {
+            _quests.value = _quests.value.mapIndexed { i, q ->
+                if (i == index) q.copy(isComplete = true) else q
             }
-        }
-    }
 
-    fun completeQuest(index: Int, onExpUpdate: (Int, Int, Int) -> Unit, onComplete: () -> Unit) {
-        val quest = quests[index]
-        val current = _profile.value
-
-        if (!quest.isComplete && current.energy >= quest.energyCost) {
-            // Enerji güncelle
-            _profile.value = current.copy(
-                energy = current.energy - quest.energyCost
-            )
-
-            // Görevi tamamla
-            quests[index] = quest.copy(isComplete = true)
-
-            animateExpGain(
+            expAnimationJob?.cancel()
+            expAnimationJob = animateExpGain(
                 amount = quest.expReward,
                 onExpUpdate = onExpUpdate,
-                onComplete = onComplete
+                onLevelUp = onLevelUp,
+                onComplete = onComplete,
             )
         }
     }
 
-    fun animateExpGain(amount: Int, onExpUpdate: (Int, Int, Int) -> Unit, onComplete: () -> Unit) {
-        viewModelScope.launch {
-            var remainingExp = amount
-            var localProfile = _profile.value
+    fun continueExpGain(
+        onExpUpdate: (Int, Int, Int) -> Unit,
+        onLevelUp: (Int) -> Unit,
+        onComplete: () -> Unit
+    ) {
+        // Devamı varsa, kaldığı yerden devam et
+        expAnimationJob = animateExpGain(0, onExpUpdate, onLevelUp, onComplete)
+    }
 
-            while (remainingExp > 0) {
-                val expForNext = localProfile.expForNextLevel()
-                val expToLevelUp = expForNext - localProfile.exp
-                val gain = minOf(remainingExp, expToLevelUp)
+    fun animateExpGain(
+        amount: Int,
+        onExpUpdate: (Int, Int, Int) -> Unit,
+        onLevelUp: (Int) -> Unit,
+        onComplete: () -> Unit
+    ): Job {
+        if (amount > 0) remainingExpGlobal = amount
+
+        return viewModelScope.launch {
+            while (remainingExpGlobal > 0) {
+                val expForNext = profileSnapshot.expForNextLevel()
+                val expToLevelUp = expForNext - profileSnapshot.exp
+                val gain = minOf(remainingExpGlobal, expToLevelUp)
 
                 // XP artır
-                localProfile = localProfile.copy(exp = localProfile.exp + gain)
-                remainingExp -= gain
+                profileSnapshot = profileSnapshot.copy(exp = profileSnapshot.exp + gain)
+                remainingExpGlobal -= gain
 
                 // Önce Xp barı dolsun (eğer seviye atlama gerekiyorsa)
                 onExpUpdate(
-                    localProfile.level,
-                    localProfile.exp,
-                    localProfile.expForNextLevel()
+                    profileSnapshot.level,
+                    profileSnapshot.exp,
+                    profileSnapshot.expForNextLevel()
                 )
 
                 delay(600)
 
-                if (localProfile.exp >= expForNext) {
+                if (profileSnapshot.exp >= expForNext) {
                     // XP bar doldu, şimdi seviye atla ve sıfırla
-                    localProfile = localProfile.copy(
-                        level = localProfile.level + 1,
+                    profileSnapshot = profileSnapshot.copy(
+                        level = profileSnapshot.level + 1,
                         exp = 0
                     )
 
+                    _profile.value = profileSnapshot
+
                     onExpUpdate(
-                        localProfile.level,
-                        localProfile.exp,
-                        localProfile.expForNextLevel()
+                        profileSnapshot.level,
+                        profileSnapshot.exp,
+                        profileSnapshot.expForNextLevel()
                     )
 
-                    delay(600)
-                }
+                    onLevelUp(profileSnapshot.level)
 
-                _profile.value = localProfile
+                    return@launch
+                }
             }
 
             onComplete()
         }
     }
 
-    fun getEnergy(): Int = profile.value.energy
     fun getLevel(): Int = profile.value.level
     fun getExp(): Int = profile.value.exp
     fun getExpForNextLevel(): Int = profile.value.expForNextLevel()

@@ -27,8 +27,8 @@ import com.hakankaraotcu.focusquest.GameViewModelFactory
 import com.hakankaraotcu.focusquest.R
 import com.hakankaraotcu.focusquest.domain.model.Profile
 import com.hakankaraotcu.focusquest.domain.model.Quest
-import com.hakankaraotcu.focusquest.presentation.components.ConfirmDialog
 import com.hakankaraotcu.focusquest.presentation.components.DashboardTopBar
+import com.hakankaraotcu.focusquest.presentation.components.LevelUpDialog
 import com.hakankaraotcu.focusquest.presentation.components.questsList
 import com.hakankaraotcu.focusquest.ui.theme.FocusQuestTheme
 
@@ -42,32 +42,13 @@ fun DashboardScreen() {
     var uiLevel by remember { mutableIntStateOf(profile.level) }
     var uiExp by remember { mutableIntStateOf(profile.exp) }
     var uiExpMax by remember { mutableIntStateOf(profile.expForNextLevel()) }
-    val quests = viewModel.quests
-    val energy = viewModel.getEnergy()
+    val quests by viewModel.quests
 
-    var isConfirmDialogOpen by rememberSaveable { mutableStateOf(false) }
     var selectedQuestIndex by rememberSaveable { mutableIntStateOf(-1) }
+    var isLevelUpDialogOpen by rememberSaveable { mutableStateOf(false) }
 
-    ConfirmDialog(
-        isOpen = isConfirmDialogOpen,
-        onDismissRequest = { isConfirmDialogOpen = false },
-        onConfirmButtonClick = {
-            if (selectedQuestIndex != -1) {
-                viewModel.completeQuest(
-                    index = selectedQuestIndex,
-                    onExpUpdate = { level, exp, expMax ->
-                        uiLevel = level
-                        uiExp = exp
-                        uiExpMax = expMax
-                    },
-                    onComplete = {
-                        // Görev tamamlandıktan sonra yapılacak ek işlemler
-                    }
-                )
-            }
-            isConfirmDialogOpen = false
-        }
-    )
+    var pendingLevelUp by remember { mutableStateOf(false) }
+    var levelUpDialogLevel by remember { mutableIntStateOf(0) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -80,7 +61,6 @@ fun DashboardScreen() {
             topBar = {
                 Column {
                     DashboardTopBar(
-                        energy = energy,
                         level = uiLevel,
                         exp = uiExp,
                         maxExp = uiExpMax
@@ -98,19 +78,57 @@ fun DashboardScreen() {
                     sectionTitle = "UNCOMPLETED QUESTS",
                     emptyQuestText = "Congratulations, you have finished all the quests.",
                     emptyQuestImage = R.drawable.uncomplete,
-                    quests = quests.withIndex().filter { !it.value.isComplete },
+                    quests = quests.withIndex().toList().filter { !it.value.isComplete },
                     onCompleteButtonClick = { index ->
                         selectedQuestIndex = index
-                        isConfirmDialogOpen = true
+                        if (selectedQuestIndex != -1) {
+                            viewModel.completeQuest(
+                                index = selectedQuestIndex,
+                                onExpUpdate = { level, exp, expMax ->
+                                    uiLevel = level
+                                    uiExp = exp
+                                    uiExpMax = expMax
+                                },
+                                onLevelUp = { level ->
+                                    levelUpDialogLevel = level
+                                    isLevelUpDialogOpen = true
+                                    pendingLevelUp = true
+                                },
+                                onComplete = {
+                                    // Görev tamamlandıktan sonra yapılacak ek işlemler
+                                }
+                            )
+                        }
                     }
                 )
                 questsList(
                     sectionTitle = "COMPLETED QUESTS",
                     emptyQuestText = "Did you really try today?\nI have a feeling you've gotten a little lazy...",
                     emptyQuestImage = R.drawable.complete,
-                    quests = quests.withIndex().filter { it.value.isComplete },
+                    quests = quests.withIndex().toList().filter { it.value.isComplete },
                     onCompleteButtonClick = {}
                 )
+            }
+            if (isLevelUpDialogOpen) {
+                LevelUpDialog(level = levelUpDialogLevel, coinsEarned = 10, xpEarned = 10) {
+                    isLevelUpDialogOpen = false
+                    if (pendingLevelUp) {
+                        pendingLevelUp = false
+                        viewModel.continueExpGain(onExpUpdate = { level, exp, expMax ->
+                            uiLevel = level
+                            uiExp = exp
+                            uiExpMax = expMax
+                        },
+                            onLevelUp = { level ->
+                                levelUpDialogLevel = level
+                                isLevelUpDialogOpen = true
+                                pendingLevelUp = true
+                            },
+                            onComplete = {
+
+                            })
+                    }
+                }
             }
         }
     }
@@ -127,21 +145,7 @@ fun DashboardScreenContent(
     var uiExp by remember { mutableIntStateOf(profile.exp) }
     var uiExpMax by remember { mutableIntStateOf(profile.expForNextLevel()) }
 
-    val energy = profile.energy
-
-    var isConfirmDialogOpen by rememberSaveable { mutableStateOf(false) }
     var selectedQuestIndex by rememberSaveable { mutableIntStateOf(-1) }
-
-    ConfirmDialog(
-        isOpen = isConfirmDialogOpen,
-        onDismissRequest = { isConfirmDialogOpen = false },
-        onConfirmButtonClick = {
-            if (selectedQuestIndex != -1) {
-                onCompleteQuestClick(selectedQuestIndex)
-            }
-            isConfirmDialogOpen = false
-        }
-    )
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -153,7 +157,6 @@ fun DashboardScreenContent(
         Scaffold(
             topBar = {
                 DashboardTopBar(
-                    energy = energy,
                     level = uiLevel,
                     exp = uiExp,
                     maxExp = uiExpMax
@@ -173,7 +176,6 @@ fun DashboardScreenContent(
                     quests = quests.withIndex().filter { !it.value.isComplete },
                     onCompleteButtonClick = {
                         selectedQuestIndex = it
-                        isConfirmDialogOpen = true
                     }
                 )
                 questsList(
@@ -192,10 +194,10 @@ fun DashboardScreenContent(
 @Composable
 fun DashboardScreenPreview() {
     FocusQuestTheme {
-        val dummyProfile = Profile(level = 3, exp = 10, energy = 5)
+        val dummyProfile = Profile(level = 3, exp = 10)
         val dummyQuests = listOf(
-            Quest(1, "Read a Book", 3, 10, false),
-            Quest(2, "Stretch", 2, 5, true)
+            Quest(1, "Read a Book", 10, false),
+            Quest(2, "Stretch", 5, true)
         )
 
         DashboardScreenContent(

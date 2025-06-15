@@ -115,17 +115,10 @@ fun QuestCard(
                     } else TextDecoration.None
                 )
                 Spacer(modifier = Modifier.height(4.dp))
-                Row {
-                    Text(
-                        text = "Energy: ${quest.energyCost}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    Spacer(modifier = Modifier.width(16.dp))
-                    Text(
-                        text = "Exp: ${quest.expReward}",
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                }
+                Text(
+                    text = "Xp: ${quest.expReward}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
             }
 
             Spacer(modifier = Modifier.width(8.dp))
@@ -156,7 +149,6 @@ fun QuestCardPreview() {
             quest = Quest(
                 id = 1,
                 name = "Example Quest",
-                energyCost = 3,
                 expReward = 15,
                 isComplete = false
             ),
@@ -170,8 +162,8 @@ fun QuestCardPreview() {
 fun QuestsListPreview() {
     FocusQuestTheme {
         val sampleQuests = listOf(
-            IndexedValue(0, Quest(1, "Stretch", 2, 10, false)),
-            IndexedValue(1, Quest(2, "Read a Book", 3, 15, false))
+            IndexedValue(0, Quest(1, "Stretch", 10, false)),
+            IndexedValue(1, Quest(2, "Read a Book", 15, false))
         )
 
         LazyColumn(modifier = Modifier.fillMaxSize()) {
