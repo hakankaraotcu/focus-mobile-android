@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.hakankaraotcu.focusquest.R
+import com.hakankaraotcu.focusquest.core.presentation.components.DefaultButton
 import com.hakankaraotcu.focusquest.feature_quest.domain.model.Quest
 
 @Composable
@@ -66,7 +67,7 @@ fun QuestItem(
             }
             Spacer(Modifier.width(8.dp))
             if (!quest.isCompleted) {
-                DefaultButton("complete", onClick = onComplete)
+                DefaultButton("Complete", onClick = onComplete)
             } else {
                 Image(
                     modifier = Modifier.size(48.dp),

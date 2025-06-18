@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,39 +11,46 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import com.hakankaraotcu.focusquest.R
+import com.hakankaraotcu.focusquest.core.navigation.Screen
+import com.hakankaraotcu.focusquest.feature_profile.presentation.profile.ProfileViewModel
+import com.hakankaraotcu.focusquest.feature_quest.presentation.quests.components.EmptyStateSection
 import com.hakankaraotcu.focusquest.feature_quest.presentation.quests.components.QuestItem
-import com.hakankaraotcu.focusquest.feature_quest.presentation.util.Screen
-import com.hakankaraotcu.focusquest.presentation.components.DashboardTopBar
-import com.hakankaraotcu.focusquest.presentation.components.LevelProgressBar
+import com.hakankaraotcu.focusquest.feature_quest.presentation.quests.components.QuestsTopBar
+import com.hakankaraotcu.focusquest.core.presentation.components.LevelUpDialog
+import kotlinx.coroutines.launch
 
 @Composable
 fun QuestsScreen(
     navController: NavController,
-    viewModel: QuestsViewModel = hiltViewModel()
+    profileViewModel: ProfileViewModel = hiltViewModel(),
+    questViewModel: QuestsViewModel = hiltViewModel()
 ) {
-    val state = viewModel.state.value
+    val uiState by profileViewModel.uiState
+    val profile = uiState.profile
+    val xp = uiState.xp
+    val xpMax = uiState.xpMax
+    val level = uiState.level
+    val isLevelUpDialogOpen = uiState.isLevelUpDialogOpen
+    val previousLevel = uiState.previousLevel
+
+    val questsState = questViewModel.questsState.value
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -56,11 +62,15 @@ fun QuestsScreen(
         Scaffold(
             topBar = {
                 Column {
-                    DashboardTopBar(
-                        level = 1,
-                        exp = 0,
-                        maxExp = 10,
-                    )
+                    if (profile != null) {
+                        QuestsTopBar(
+                            level = level,
+                            xp = xp,
+                            xpMax = xpMax,
+                        ) {
+                            navController.navigate(Screen.ProfileScreen.route)
+                        }
+                    }
                 }
             },
             contentWindowInsets = WindowInsets.safeContent,
@@ -71,25 +81,10 @@ fun QuestsScreen(
                     .fillMaxSize()
                     .padding(paddingValues)
             ) {
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.SpaceBetween,
-//                verticalAlignment = Alignment.CenterVertically
-//            ) {
-//                LevelProgressBar(level = 1, exp = 0, expForNextLevel = 10)
-//                IconButton(onClick = {
-//                    //navController.navigate(Screen.ProfileScreen.route)
-//                }) {
-//                    Icon(
-//                        modifier = Modifier.size(32.dp),
-//                        imageVector = Icons.Default.AccountCircle,
-//                        tint = Color.White,
-//                        contentDescription = "Profile"
-//                    )
-//                }
-//            }
-                Spacer(modifier = Modifier.height(16.dp))
-                LazyColumn(modifier = Modifier.fillMaxSize()) {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
                     item {
                         Text(
                             text = "UNCOMPLETED QUESTS",
@@ -98,43 +93,29 @@ fun QuestsScreen(
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
                     }
-                    if (state.uncompletedQuests.isEmpty()) {
+                    if (questsState.uncompletedQuests.isEmpty()) {
                         item {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Image(
-                                    modifier = Modifier.size(120.dp),
-                                    painter = painterResource(R.drawable.uncomplete),
-                                    contentDescription = "Uncomplete Image"
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Text(
-                                    text = "Congratulations, you have finished all the quests.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Center
-                                )
-
-                                Spacer(modifier = Modifier.height(12.dp))
-                            }
+                            EmptyStateSection(
+                                imageRes = R.drawable.uncomplete,
+                                message = "Congratulations, you have finished all the quests."
+                            )
                         }
                     }
-                    items(state.uncompletedQuests) { quest ->
+                    items(questsState.uncompletedQuests, key = { it.id!! }) { quest ->
+                        val scope = rememberCoroutineScope()
                         QuestItem(
                             quest = quest,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(horizontal = 16.dp),
                             onComplete = {
-                                viewModel.onEvent(QuestsEvent.Complete(quest))
+                                scope.launch {
+                                    questViewModel.onEvent(QuestsEvent.Complete(quest))
+                                    profileViewModel.handleQuestCompletion(quest.xpReward)
+                                }
                             }
                         )
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
                     item {
                         Spacer(modifier = Modifier.height(6.dp))
@@ -145,34 +126,17 @@ fun QuestsScreen(
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
                         )
-                        Spacer(modifier = Modifier.height(6.dp))
                     }
-                    if (state.completedQuests.isEmpty()) {
+                    if (questsState.completedQuests.isEmpty()) {
                         item {
-                            Column(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Image(
-                                    modifier = Modifier.size(120.dp),
-                                    painter = painterResource(R.drawable.complete),
-                                    contentDescription = "Complete Image"
-                                )
-                                Spacer(modifier = Modifier.height(12.dp))
-
-                                Text(
-                                    text = "Did you really try today?\n" +
-                                            "I have a feeling you've gotten a little lazy...",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Color.White,
-                                    textAlign = TextAlign.Center
-                                )
-
-                                Spacer(modifier = Modifier.height(12.dp))
-                            }
+                            EmptyStateSection(
+                                imageRes = R.drawable.complete,
+                                message = "Did you really try today?\n" +
+                                        "I have a feeling you've gotten a little lazy..."
+                            )
                         }
                     }
-                    items(state.completedQuests) { quest ->
+                    items(questsState.completedQuests, key = { it.id!! }) { quest ->
                         QuestItem(
                             quest = quest,
                             modifier = Modifier
@@ -186,6 +150,17 @@ fun QuestsScreen(
                     }
                 }
             }
+        }
+    }
+
+    if (isLevelUpDialogOpen && profile != null) {
+        LevelUpDialog(
+            previousLevel = previousLevel,
+            level = level,
+            coinsEarned = xp,
+            xpEarned = xp
+        ) {
+            profileViewModel.onLevelUpConfirmed()
         }
     }
 }

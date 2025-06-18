@@ -2,28 +2,25 @@ package com.hakankaraotcu.focusquest.di
 
 import android.app.Application
 import androidx.room.Room
-import androidx.room.RoomDatabase
-import androidx.sqlite.SQLiteConnection
-import com.hakankaraotcu.focusquest.feature_quest.data.data_source.QuestDatabase
-import com.hakankaraotcu.focusquest.feature_quest.data.repository.ProfileRepositoryImpl
+import com.hakankaraotcu.focusquest.core.data.local.AppDatabase
+import com.hakankaraotcu.focusquest.feature_profile.data.repository.ProfileRepositoryImpl
 import com.hakankaraotcu.focusquest.feature_quest.data.repository.QuestRepositoryImpl
-import com.hakankaraotcu.focusquest.feature_quest.domain.model.Profile
-import com.hakankaraotcu.focusquest.feature_quest.domain.repository.ProfileRepository
+import com.hakankaraotcu.focusquest.feature_profile.domain.repository.ProfileRepository
+import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.AddXpToProfile
+import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.CalculateLevelFromXp
 import com.hakankaraotcu.focusquest.feature_quest.domain.repository.QuestRepository
-import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.GetProfile
+import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.GetProfile
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.UpsertQuest
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.GetQuest
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.GetQuests
-import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.ProfileUseCases
+import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.ProfileUseCases
+import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.UpdateProfileLevel
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.QuestUseCases
-import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.UpdateProfileWithQuest
+import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.UpdateProfileWithQuest
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
 @Module
@@ -32,33 +29,23 @@ object AppModule {
 
     @Provides
     @Singleton
-    fun provideQuestDatabase(app: Application): QuestDatabase {
+    fun provideAppDatabase(app: Application): AppDatabase {
         return Room.databaseBuilder(
             app,
-            QuestDatabase::class.java,
-            QuestDatabase.DATABASE_NAME
-        )
-            .addCallback(object : RoomDatabase.Callback() {
-                override fun onCreate(connection: SQLiteConnection) {
-                    super.onCreate(connection)
-                    CoroutineScope(Dispatchers.IO).launch {
-                        val dao = provideQuestDatabase(app).profileDao
-                        dao.insertProfile(Profile())
-                    }
-                }
-            })
-            .build()
+            AppDatabase::class.java,
+            AppDatabase.DATABASE_NAME
+        ).build()
     }
 
     @Provides
     @Singleton
-    fun provideQuestRepository(db: QuestDatabase): QuestRepository {
+    fun provideQuestRepository(db: AppDatabase): QuestRepository {
         return QuestRepositoryImpl(db.questDao)
     }
 
     @Provides
     @Singleton
-    fun provideProfileRepository(db: QuestDatabase): ProfileRepository {
+    fun provideProfileRepository(db: AppDatabase): ProfileRepository {
         return ProfileRepositoryImpl(db.profileDao)
     }
 
@@ -68,16 +55,24 @@ object AppModule {
         return QuestUseCases(
             getQuests = GetQuests(repository),
             getQuest = GetQuest(repository),
-            upsertQuest = UpsertQuest(repository)
+            upsertQuest = UpsertQuest(repository),
         )
     }
 
     @Provides
     @Singleton
     fun provideProfileUseCases(repository: ProfileRepository): ProfileUseCases {
+        val calculateLevelFromXp = CalculateLevelFromXp()
+        val addXpToProfile = AddXpToProfile(repository)
+        val updateProfileLevel = UpdateProfileLevel(repository, calculateLevelFromXp)
+        val updateProfileWithQuest = UpdateProfileWithQuest(addXpToProfile, updateProfileLevel)
+
         return ProfileUseCases(
-            updateProfileWithQuest = UpdateProfileWithQuest(repository),
-            getProfile = GetProfile(repository)
+            getProfile = GetProfile(repository),
+            addXpToProfile = addXpToProfile,
+            calculateLevelFromXp = calculateLevelFromXp,
+            updateProfileLevel = updateProfileLevel,
+            updateProfileWithQuest = updateProfileWithQuest
         )
     }
 }

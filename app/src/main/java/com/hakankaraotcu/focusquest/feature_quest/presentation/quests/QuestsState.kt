@@ -1,7 +1,7 @@
 package com.hakankaraotcu.focusquest.feature_quest.presentation.quests
 
 import com.hakankaraotcu.focusquest.feature_quest.domain.model.Quest
-import com.hakankaraotcu.focusquest.feature_quest.domain.util.OrderType
+import com.hakankaraotcu.focusquest.core.util.OrderType
 import com.hakankaraotcu.focusquest.feature_quest.domain.util.QuestOrder
 
 data class QuestsState(

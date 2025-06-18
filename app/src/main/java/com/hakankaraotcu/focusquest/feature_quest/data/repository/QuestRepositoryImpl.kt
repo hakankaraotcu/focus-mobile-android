@@ -1,6 +1,6 @@
 package com.hakankaraotcu.focusquest.feature_quest.data.repository
 
-import com.hakankaraotcu.focusquest.feature_quest.data.data_source.QuestDao
+import com.hakankaraotcu.focusquest.feature_quest.data.local.QuestDao
 import com.hakankaraotcu.focusquest.feature_quest.domain.model.Quest
 import com.hakankaraotcu.focusquest.feature_quest.domain.repository.QuestRepository
 import kotlinx.coroutines.flow.Flow

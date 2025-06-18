@@ -1,5 +1,7 @@
 package com.hakankaraotcu.focusquest.feature_quest.domain.util
 
+import com.hakankaraotcu.focusquest.core.util.OrderType
+
 sealed class QuestOrder(val orderType: OrderType) {
     class Title(orderType: OrderType) : QuestOrder(orderType)
     class Xp(orderType: OrderType) : QuestOrder(orderType)

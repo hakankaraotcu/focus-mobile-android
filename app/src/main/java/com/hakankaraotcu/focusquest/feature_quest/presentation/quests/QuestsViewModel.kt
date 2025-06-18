@@ -4,9 +4,9 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.ProfileUseCases
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.QuestUseCases
-import com.hakankaraotcu.focusquest.feature_quest.domain.util.OrderType
+import com.hakankaraotcu.focusquest.core.util.OrderType
+import com.hakankaraotcu.focusquest.feature_quest.domain.model.Quest
 import com.hakankaraotcu.focusquest.feature_quest.domain.util.QuestOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
@@ -18,11 +18,10 @@ import javax.inject.Inject
 @HiltViewModel
 class QuestsViewModel @Inject constructor(
     private val questUseCases: QuestUseCases,
-    private val profileUseCases: ProfileUseCases
 ) : ViewModel() {
 
-    private val _state = mutableStateOf(QuestsState())
-    val state: State<QuestsState> = _state
+    private val _questsState = mutableStateOf(QuestsState())
+    val questsState: State<QuestsState> = _questsState
 
     private var getQuestsJob: Job? = null
 
@@ -75,21 +74,21 @@ class QuestsViewModel @Inject constructor(
 
     fun onEvent(event: QuestsEvent) {
         when (event) {
+            // Sıralama istenirse çalış
             is QuestsEvent.Order -> {
-                if (state.value.questOrder::class == event.questOrder::class &&
-                    state.value.questOrder.orderType == event.questOrder.orderType
+                if (questsState.value.questOrder::class == event.questOrder::class &&
+                    questsState.value.questOrder.orderType == event.questOrder.orderType
                 ) {
                     return
                 }
                 getQuests(event.questOrder)
             }
 
+            // Görev tamamlanınca çalış
             is QuestsEvent.Complete -> {
                 viewModelScope.launch {
                     val updatedQuest = event.quest.copy(isCompleted = true)
                     questUseCases.upsertQuest(updatedQuest)
-
-                    profileUseCases.updateProfileWithQuest(updatedQuest.xpReward)
                 }
             }
         }
@@ -99,7 +98,7 @@ class QuestsViewModel @Inject constructor(
         getQuestsJob?.cancel()
         getQuestsJob = questUseCases.getQuests(questOrder)
             .onEach { quests ->
-                _state.value = state.value.copy(
+                _questsState.value = questsState.value.copy(
                     completedQuests = quests.filter { it.isCompleted },
                     uncompletedQuests = quests.filter { !it.isCompleted },
                     questOrder = questOrder
