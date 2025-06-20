@@ -30,7 +30,7 @@ import com.hakankaraotcu.focusquest.feature_quest.domain.model.Quest
 fun QuestItem(
     quest: Quest,
     modifier: Modifier = Modifier,
-    cornerRadius: Dp = 10.dp,
+    cornerRadius: Dp = 8.dp,
     onComplete: () -> Unit
 ) {
     ElevatedCard(

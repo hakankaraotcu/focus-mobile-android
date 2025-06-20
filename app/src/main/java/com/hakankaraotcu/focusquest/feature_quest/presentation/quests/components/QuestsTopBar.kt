@@ -1,6 +1,6 @@
 package com.hakankaraotcu.focusquest.feature_quest.presentation.quests.components
 
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -23,7 +23,9 @@ import com.hakankaraotcu.focusquest.ui.theme.FocusQuestTheme
 fun QuestsTopBar(level: Int, xp: Int, xpMax: Int, onClick: () -> Unit) {
     TopAppBar(
         title = {
-            Column {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 LevelProgressBar(level = level, xp = xp, xpForNextLevel = xpMax)
             }
         },

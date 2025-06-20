@@ -10,6 +10,9 @@ import com.hakankaraotcu.focusquest.feature_quest.domain.model.Quest
 import com.hakankaraotcu.focusquest.feature_quest.domain.util.QuestOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -20,8 +23,8 @@ class QuestsViewModel @Inject constructor(
     private val questUseCases: QuestUseCases,
 ) : ViewModel() {
 
-    private val _questsState = mutableStateOf(QuestsState())
-    val questsState: State<QuestsState> = _questsState
+    private val _questsState = MutableStateFlow(QuestsState())
+    val questsState: StateFlow<QuestsState> = _questsState.asStateFlow()
 
     private var getQuestsJob: Job? = null
 

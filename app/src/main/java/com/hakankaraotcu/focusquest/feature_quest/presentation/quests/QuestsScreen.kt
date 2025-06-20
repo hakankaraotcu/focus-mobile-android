@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeContent
@@ -17,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -42,15 +42,8 @@ fun QuestsScreen(
     profileViewModel: ProfileViewModel = hiltViewModel(),
     questViewModel: QuestsViewModel = hiltViewModel()
 ) {
-    val uiState by profileViewModel.uiState
-    val profile = uiState.profile
-    val xp = uiState.xp
-    val xpMax = uiState.xpMax
-    val level = uiState.level
-    val isLevelUpDialogOpen = uiState.isLevelUpDialogOpen
-    val previousLevel = uiState.previousLevel
-
-    val questsState = questViewModel.questsState.value
+    val uiState by profileViewModel.uiState.collectAsState()
+    val questsState by questViewModel.questsState.collectAsState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Image(
@@ -62,11 +55,11 @@ fun QuestsScreen(
         Scaffold(
             topBar = {
                 Column {
-                    if (profile != null) {
+                    if (uiState.profile != null) {
                         QuestsTopBar(
-                            level = level,
-                            xp = xp,
-                            xpMax = xpMax,
+                            level = uiState.level,
+                            xp = uiState.xp,
+                            xpMax = uiState.xpMax,
                         ) {
                             navController.navigate(Screen.ProfileScreen.route)
                         }
@@ -76,91 +69,83 @@ fun QuestsScreen(
             contentWindowInsets = WindowInsets.safeContent,
             containerColor = Color.Transparent
         ) { paddingValues ->
-            Column(
+            LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(paddingValues)
+                    .padding(paddingValues),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
+                item {
+                    Text(
+                        text = "UNCOMPLETED QUESTS",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
+                }
+                if (questsState.uncompletedQuests.isEmpty()) {
                     item {
-                        Text(
-                            text = "UNCOMPLETED QUESTS",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        EmptyStateSection(
+                            imageRes = R.drawable.uncomplete,
+                            message = "Congratulations, you have finished all the quests."
                         )
-                    }
-                    if (questsState.uncompletedQuests.isEmpty()) {
-                        item {
-                            EmptyStateSection(
-                                imageRes = R.drawable.uncomplete,
-                                message = "Congratulations, you have finished all the quests."
-                            )
-                        }
-                    }
-                    items(questsState.uncompletedQuests, key = { it.id!! }) { quest ->
-                        val scope = rememberCoroutineScope()
-                        QuestItem(
-                            quest = quest,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            onComplete = {
-                                scope.launch {
-                                    questViewModel.onEvent(QuestsEvent.Complete(quest))
-                                    profileViewModel.handleQuestCompletion(quest.xpReward)
-                                }
-                            }
-                        )
-                    }
-                    item {
-                        Spacer(modifier = Modifier.height(6.dp))
-                        Text(
-                            text = "COMPLETED QUESTS",
-                            color = Color.White,
-                            fontWeight = FontWeight.Bold,
-                            style = MaterialTheme.typography.bodySmall,
-                            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
-                        )
-                    }
-                    if (questsState.completedQuests.isEmpty()) {
-                        item {
-                            EmptyStateSection(
-                                imageRes = R.drawable.complete,
-                                message = "Did you really try today?\n" +
-                                        "I have a feeling you've gotten a little lazy..."
-                            )
-                        }
-                    }
-                    items(questsState.completedQuests, key = { it.id!! }) { quest ->
-                        QuestItem(
-                            quest = quest,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            onComplete = {
-                                // Not necessary
-                            }
-                        )
-                        Spacer(modifier = Modifier.height(16.dp))
                     }
                 }
+                items(questsState.uncompletedQuests, key = { it.id!! }) { quest ->
+                    val scope = rememberCoroutineScope()
+                    QuestItem(
+                        quest = quest,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp),
+                        onComplete = {
+                            scope.launch {
+                                questViewModel.onEvent(QuestsEvent.Complete(quest))
+                                profileViewModel.handleQuestCompletion(quest.xpReward)
+                            }
+                        }
+                    )
+                }
+                item {
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "COMPLETED QUESTS",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
+                }
+                if (questsState.completedQuests.isEmpty()) {
+                    item {
+                        EmptyStateSection(
+                            imageRes = R.drawable.complete,
+                            message = "Did you really try today?\n" +
+                                    "I have a feeling you've gotten a little lazy..."
+                        )
+                    }
+                }
+                items(questsState.completedQuests, key = { it.id!! }) { quest ->
+                    QuestItem(
+                        quest = quest,
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp),
+                        onComplete = {
+                            // Not necessary
+                        }
+                    )
+                }
             }
-        }
-    }
-
-    if (isLevelUpDialogOpen && profile != null) {
-        LevelUpDialog(
-            previousLevel = previousLevel,
-            level = level,
-            coinsEarned = xp,
-            xpEarned = xp
-        ) {
-            profileViewModel.onLevelUpConfirmed()
+            if (uiState.isLevelUpDialogOpen && uiState.profile != null) {
+                LevelUpDialog(
+                    previousLevel = profileViewModel.previousLevel,
+                    level = uiState.level,
+                    coinsEarned = uiState.xp,
+                    xpEarned = uiState.xp
+                ) {
+                    profileViewModel.onLevelUpConfirmed()
+                }
+            }
         }
     }
 }
