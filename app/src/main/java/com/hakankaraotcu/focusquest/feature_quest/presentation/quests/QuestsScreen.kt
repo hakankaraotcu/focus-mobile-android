@@ -5,15 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeContent
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -26,9 +23,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.navigation.NavController
 import com.hakankaraotcu.focusquest.R
-import com.hakankaraotcu.focusquest.core.navigation.Screen
+import com.hakankaraotcu.focusquest.core.presentation.components.LevelProgressBar
 import com.hakankaraotcu.focusquest.feature_profile.presentation.profile.ProfileViewModel
 import com.hakankaraotcu.focusquest.feature_quest.presentation.quests.components.EmptyStateSection
 import com.hakankaraotcu.focusquest.feature_quest.presentation.quests.components.QuestItem
@@ -38,7 +34,6 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun QuestsScreen(
-    navController: NavController,
     profileViewModel: ProfileViewModel = hiltViewModel(),
     questViewModel: QuestsViewModel = hiltViewModel()
 ) {
@@ -52,27 +47,18 @@ fun QuestsScreen(
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
-        Scaffold(
-            topBar = {
-                Column {
-                    if (uiState.profile != null) {
-                        QuestsTopBar(
-                            level = uiState.level,
-                            xp = uiState.xp,
-                            xpMax = uiState.xpMax,
-                        ) {
-                            navController.navigate(Screen.ProfileScreen.route)
-                        }
-                    }
-                }
-            },
-            contentWindowInsets = WindowInsets.safeContent,
-            containerColor = Color.Transparent
-        ) { paddingValues ->
+        Column(modifier = Modifier.padding(16.dp)) {
+            if (uiState.profile != null) {
+                LevelProgressBar(
+                    level = uiState.level,
+                    xp = uiState.xp,
+                    xpForNextLevel = uiState.xpMax
+                )
+            }
+            Spacer(Modifier.height(16.dp))
             LazyColumn(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 item {
@@ -81,7 +67,7 @@ fun QuestsScreen(
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
                 }
                 if (questsState.uncompletedQuests.isEmpty()) {
@@ -96,8 +82,6 @@ fun QuestsScreen(
                     val scope = rememberCoroutineScope()
                     QuestItem(
                         quest = quest,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp),
                         onComplete = {
                             scope.launch {
                                 questViewModel.onEvent(QuestsEvent.Complete(quest))
@@ -113,7 +97,7 @@ fun QuestsScreen(
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
                         style = MaterialTheme.typography.bodySmall,
-                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+                        modifier = Modifier.padding(vertical = 4.dp)
                     )
                 }
                 if (questsState.completedQuests.isEmpty()) {
@@ -128,23 +112,21 @@ fun QuestsScreen(
                 items(questsState.completedQuests, key = { it.id!! }) { quest ->
                     QuestItem(
                         quest = quest,
-                        modifier = Modifier
-                            .padding(horizontal = 16.dp),
                         onComplete = {
                             // Not necessary
                         }
                     )
                 }
             }
-            if (uiState.isLevelUpDialogOpen && uiState.profile != null) {
-                LevelUpDialog(
-                    previousLevel = profileViewModel.previousLevel,
-                    level = uiState.level,
-                    coinsEarned = uiState.xp,
-                    xpEarned = uiState.xp
-                ) {
-                    profileViewModel.onLevelUpConfirmed()
-                }
+        }
+        if (uiState.isLevelUpDialogOpen && uiState.profile != null) {
+            LevelUpDialog(
+                previousLevel = profileViewModel.previousLevel,
+                level = uiState.level,
+                coinsEarned = uiState.xp,
+                xpEarned = uiState.xp
+            ) {
+                profileViewModel.onLevelUpConfirmed()
             }
         }
     }
