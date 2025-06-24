@@ -6,4 +6,5 @@ data class ProfileUseCases(
     val calculateLevelFromXp: CalculateLevelFromXp,
     val updateProfileLevel: UpdateProfileLevel,
     val updateProfileWithQuest: UpdateProfileWithQuest,
+    val upsertProfile: UpsertProfile,
 )

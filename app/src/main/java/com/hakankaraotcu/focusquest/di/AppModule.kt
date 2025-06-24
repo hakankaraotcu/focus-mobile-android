@@ -17,6 +17,7 @@ import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.ProfileUseCa
 import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.UpdateProfileLevel
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.QuestUseCases
 import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.UpdateProfileWithQuest
+import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.UpsertProfile
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.GetTakenQuests
 import dagger.Module
 import dagger.Provides
@@ -74,7 +75,8 @@ object AppModule {
             addXpToProfile = addXpToProfile,
             calculateLevelFromXp = calculateLevelFromXp,
             updateProfileLevel = updateProfileLevel,
-            updateProfileWithQuest = updateProfileWithQuest
+            updateProfileWithQuest = updateProfileWithQuest,
+            upsertProfile = UpsertProfile(repository)
         )
     }
 }

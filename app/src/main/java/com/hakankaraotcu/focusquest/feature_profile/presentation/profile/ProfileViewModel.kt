@@ -6,18 +6,22 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.ProfileUseCases
+import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.QuestUseCases
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.forEach
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
-    private val profileUseCases: ProfileUseCases
+    private val profileUseCases: ProfileUseCases,
+    private val questUseCases: QuestUseCases // For Test Section
 ) : ViewModel() {
     private val _uiState = MutableStateFlow(ProfileUiState())
     val uiState: StateFlow<ProfileUiState> = _uiState.asStateFlow()
@@ -96,6 +100,27 @@ class ProfileViewModel @Inject constructor(
                 level = updatedProfile.level,
                 isLevelUpDialogOpen = showLevelUpDialog
             )
+        }
+    }
+
+    // For Test Section
+    fun resetData() {
+        viewModelScope.launch {
+            questUseCases.getAllQuests().collect { quests ->
+                quests.forEach { quest ->
+                    val updatedQuest = quest.copy(
+                        isTaken = false,
+                        isCompleted = false,
+                    )
+                    questUseCases.upsertQuest(updatedQuest)
+                }
+            }
+        }
+        viewModelScope.launch {
+            val updatedProfile = profileUseCases.getProfile(1).copy(
+                xp = 0, level = 1, xpToNextLevel = 10
+            )
+            profileUseCases.upsertProfile(updatedProfile)
         }
     }
 }
