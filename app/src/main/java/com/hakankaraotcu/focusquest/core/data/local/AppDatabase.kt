@@ -4,7 +4,7 @@ import androidx.room.Database
 import androidx.room.RoomDatabase
 import com.hakankaraotcu.focusquest.feature_profile.data.local.ProfileDao
 import com.hakankaraotcu.focusquest.feature_quest.data.local.QuestDao
-import com.hakankaraotcu.focusquest.feature_profile.domain.model.Profile
+import com.hakankaraotcu.focusquest.core.domain.model.Profile
 import com.hakankaraotcu.focusquest.feature_quest.domain.model.Quest
 
 @Database(

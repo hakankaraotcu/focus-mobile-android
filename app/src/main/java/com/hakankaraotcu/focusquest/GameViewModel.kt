@@ -5,14 +5,14 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.hakankaraotcu.focusquest.domain.model.Profile
-import com.hakankaraotcu.focusquest.domain.model.Quest
 import com.hakankaraotcu.focusquest.core.util.ResetHelper
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+
 class GameViewModel(application: Application) : AndroidViewModel(application) {
+    /*
     private val _profile = mutableStateOf(Profile())
     val profile: State<Profile> = _profile
 
@@ -174,4 +174,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             onComplete()
         }
     }
+
+     */
 }

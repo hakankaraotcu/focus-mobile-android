@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import com.hakankaraotcu.focusquest.feature_profile.domain.model.Profile
+import com.hakankaraotcu.focusquest.core.domain.model.Profile
 
 @Dao
 interface ProfileDao {

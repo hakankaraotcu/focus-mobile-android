@@ -7,9 +7,11 @@ import androidx.room.PrimaryKey
 data class Quest(
     @PrimaryKey val id: Int? = null,
     val title: String,
-    val level: Int,
+    val level: Int = 1,
+    val levelRequirement: Int,
     val xpReward: Int,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false,
+    val isTaken: Boolean = false,
 )
 
 class InvalidQuestException(message: String) : Exception(message)

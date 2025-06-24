@@ -1,13 +1,11 @@
-package com.hakankaraotcu.focusquest.feature_quest.presentation.quests.components
+package com.hakankaraotcu.focusquest.feature_quest.presentation.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CardColors
@@ -18,12 +16,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.hakankaraotcu.focusquest.R
-import com.hakankaraotcu.focusquest.core.presentation.components.DefaultButton
 import com.hakankaraotcu.focusquest.feature_quest.domain.model.Quest
 
 @Composable
@@ -31,7 +26,7 @@ fun QuestItem(
     quest: Quest,
     modifier: Modifier = Modifier,
     cornerRadius: Dp = 8.dp,
-    onComplete: () -> Unit
+    trailingContent: @Composable () -> Unit
 ) {
     ElevatedCard(
         modifier = modifier,
@@ -52,12 +47,7 @@ fun QuestItem(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = quest.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    textDecoration = if (quest.isCompleted) {
-                        TextDecoration.LineThrough
-                    } else {
-                        TextDecoration.None
-                    }
+                    style = MaterialTheme.typography.titleMedium
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
@@ -66,15 +56,7 @@ fun QuestItem(
                 )
             }
             Spacer(Modifier.width(8.dp))
-            if (!quest.isCompleted) {
-                DefaultButton("Complete", onClick = onComplete)
-            } else {
-                Image(
-                    modifier = Modifier.size(48.dp),
-                    contentDescription = "Check",
-                    painter = painterResource(R.drawable.check)
-                )
-            }
+            trailingContent()
         }
     }
 }

@@ -11,7 +11,10 @@ import kotlinx.coroutines.flow.Flow
 interface QuestDao {
 
     @Query("SELECT * FROM quest")
-    fun getQuests(): Flow<List<Quest>>
+    fun getAllQuests(): Flow<List<Quest>>
+
+    @Query("SELECT * FROM quest WHERE isTaken = 1")
+    fun getTakenQuests(): Flow<List<Quest>>
 
     @Query("SELECT * FROM quest WHERE id = :id")
     suspend fun getQuestById(id: Int): Quest?

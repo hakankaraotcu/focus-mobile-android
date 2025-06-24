@@ -1,4 +1,4 @@
-package com.hakankaraotcu.focusquest.feature_profile.domain.model
+package com.hakankaraotcu.focusquest.core.domain.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

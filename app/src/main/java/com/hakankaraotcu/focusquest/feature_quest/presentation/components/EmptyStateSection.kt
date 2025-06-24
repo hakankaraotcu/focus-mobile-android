@@ -1,4 +1,4 @@
-package com.hakankaraotcu.focusquest.feature_quest.presentation.quests.components
+package com.hakankaraotcu.focusquest.feature_quest.presentation.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column

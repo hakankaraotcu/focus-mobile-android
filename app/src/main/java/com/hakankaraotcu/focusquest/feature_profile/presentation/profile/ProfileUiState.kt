@@ -1,6 +1,6 @@
 package com.hakankaraotcu.focusquest.feature_profile.presentation.profile
 
-import com.hakankaraotcu.focusquest.feature_profile.domain.model.Profile
+import com.hakankaraotcu.focusquest.core.domain.model.Profile
 
 data class ProfileUiState(
     val profile: Profile? = null,

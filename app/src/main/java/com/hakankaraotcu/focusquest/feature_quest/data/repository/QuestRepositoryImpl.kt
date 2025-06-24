@@ -9,8 +9,12 @@ class QuestRepositoryImpl(
     private val dao: QuestDao
 ) : QuestRepository {
 
-    override fun getQuests(): Flow<List<Quest>> {
-        return dao.getQuests()
+    override fun getAllQuests(): Flow<List<Quest>> {
+        return dao.getAllQuests()
+    }
+
+    override fun getTakenQuests(): Flow<List<Quest>> {
+        return dao.getTakenQuests()
     }
 
     override suspend fun getQuestById(id: Int): Quest?{

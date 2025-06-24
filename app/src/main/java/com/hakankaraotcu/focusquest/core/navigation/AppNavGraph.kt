@@ -6,25 +6,25 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.hakankaraotcu.focusquest.feature_profile.presentation.profile.ProfileScreen
-import com.hakankaraotcu.focusquest.HomeScreen
-import com.hakankaraotcu.focusquest.MyQuestsScreen
-import com.hakankaraotcu.focusquest.feature_quest.presentation.quests.QuestsScreen
+import com.hakankaraotcu.focusquest.feature_quest.presentation.allquests.AllQuestsScreen
+import com.hakankaraotcu.focusquest.feature_quest.presentation.home.HomeScreen
+import com.hakankaraotcu.focusquest.feature_quest.presentation.myquests.MyQuestsScreen
 
 @Composable
 fun AppNavGraph(navController: NavHostController, modifier: Modifier) {
     NavHost(
         navController = navController,
-        startDestination = Screen.QuestsScreen.route,
+        startDestination = Screen.HomeScreen.route,
         modifier = modifier
     ) {
         composable(route = Screen.HomeScreen.route) {
-            HomeScreen(navController = navController)
+            HomeScreen()
         }
-        composable(route = Screen.QuestsScreen.route) {
-            QuestsScreen()
+        composable(route = Screen.AllQuestsScreen.route) {
+            AllQuestsScreen()
         }
         composable(route = Screen.MyQuestsScreen.route) {
-            MyQuestsScreen(navController = navController)
+            MyQuestsScreen()
         }
         composable(route = Screen.ProfileScreen.route) {
             ProfileScreen(navController = navController)

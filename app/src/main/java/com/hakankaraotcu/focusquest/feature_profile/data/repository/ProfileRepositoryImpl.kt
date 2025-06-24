@@ -1,7 +1,7 @@
 package com.hakankaraotcu.focusquest.feature_profile.data.repository
 
 import com.hakankaraotcu.focusquest.feature_profile.data.local.ProfileDao
-import com.hakankaraotcu.focusquest.feature_profile.domain.model.Profile
+import com.hakankaraotcu.focusquest.core.domain.model.Profile
 import com.hakankaraotcu.focusquest.feature_profile.domain.repository.ProfileRepository
 
 class ProfileRepositoryImpl(

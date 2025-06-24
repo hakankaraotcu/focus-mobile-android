@@ -12,11 +12,12 @@ import com.hakankaraotcu.focusquest.feature_quest.domain.repository.QuestReposit
 import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.GetProfile
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.UpsertQuest
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.GetQuest
-import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.GetQuests
+import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.GetAllQuests
 import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.ProfileUseCases
 import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.UpdateProfileLevel
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.QuestUseCases
 import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.UpdateProfileWithQuest
+import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.GetTakenQuests
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -53,7 +54,8 @@ object AppModule {
     @Singleton
     fun provideQuestUseCases(repository: QuestRepository): QuestUseCases {
         return QuestUseCases(
-            getQuests = GetQuests(repository),
+            getAllQuests = GetAllQuests(repository),
+            getTakenQuests = GetTakenQuests(repository),
             getQuest = GetQuest(repository),
             upsertQuest = UpsertQuest(repository),
         )

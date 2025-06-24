@@ -16,7 +16,6 @@ fun DefaultButton(
     onClick: () -> Unit
 ) {
     Row(
-        modifier = modifier,
         verticalAlignment = Alignment.CenterVertically
     ) {
         Button(
