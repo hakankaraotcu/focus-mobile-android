@@ -11,40 +11,31 @@ class GetAllQuests(
     private val repository: QuestRepository
 ) {
     operator fun invoke(
-        userLevel: Int,
         questOrder: QuestOrder = QuestOrder.Xp(OrderType.Ascending)
     ): Flow<List<Quest>> {
         return repository.getAllQuests().map { quests ->
             when (questOrder.orderType) {
                 is OrderType.Ascending -> {
                     when (questOrder) {
-                        is QuestOrder.Title -> quests.filter { it.levelRequirement <= userLevel }
-                            .sortedBy { it.title }
+                        is QuestOrder.Title -> quests.sortedBy { it.title }
 
-                        is QuestOrder.LevelRequirement -> quests.filter { it.levelRequirement <= userLevel }
-                            .sortedBy { it.levelRequirement }
+                        is QuestOrder.LevelRequirement -> quests.sortedBy { it.levelRequirement }
 
-                        is QuestOrder.Level -> quests.filter { it.levelRequirement <= userLevel }
-                            .sortedBy { it.level }
+                        is QuestOrder.Level -> quests.sortedBy { it.level }
 
-                        is QuestOrder.Xp -> quests.filter { it.levelRequirement <= userLevel }
-                            .sortedBy { it.xpReward }
+                        is QuestOrder.Xp -> quests.sortedBy { it.xpReward }
                     }
                 }
 
                 is OrderType.Descending -> {
                     when (questOrder) {
-                        is QuestOrder.Title -> quests.filter { it.levelRequirement <= userLevel }
-                            .sortedByDescending { it.title }
+                        is QuestOrder.Title -> quests.sortedByDescending { it.title }
 
-                        is QuestOrder.LevelRequirement -> quests.filter { it.levelRequirement <= userLevel }
-                            .sortedByDescending { it.levelRequirement }
+                        is QuestOrder.LevelRequirement -> quests.sortedByDescending { it.levelRequirement }
 
-                        is QuestOrder.Level -> quests.filter { it.levelRequirement <= userLevel }
-                            .sortedByDescending { it.level }
+                        is QuestOrder.Level -> quests.sortedByDescending { it.level }
 
-                        is QuestOrder.Xp -> quests.filter { it.levelRequirement <= userLevel }
-                            .sortedByDescending { it.xpReward }
+                        is QuestOrder.Xp -> quests.sortedByDescending { it.xpReward }
                     }
                 }
             }

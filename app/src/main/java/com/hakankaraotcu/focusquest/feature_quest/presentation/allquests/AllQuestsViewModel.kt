@@ -12,6 +12,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -64,8 +65,43 @@ class AllQuestsViewModel @Inject constructor(
 //                    xpReward = 50
 //                )
 //            )
+//            questUseCases.upsertQuest(
+//                Quest(
+//                    title = "1000 Adım at",
+//                    levelRequirement = 1,
+//                    xpReward = 25
+//                )
+//            )
+//            questUseCases.upsertQuest(
+//                Quest(
+//                    title = "Gitar öğren",
+//                    levelRequirement = 2,
+//                    xpReward = 40
+//                )
+//            )
+//            questUseCases.upsertQuest(
+//                Quest(
+//                    title = "Ders çalış",
+//                    levelRequirement = 1,
+//                    xpReward = 10
+//                )
+//            )
+//            questUseCases.upsertQuest(
+//                Quest(
+//                    title = "Yapboz yap",
+//                    levelRequirement = 1,
+//                    xpReward = 20
+//                )
+//            )
+//            questUseCases.upsertQuest(
+//                Quest(
+//                    title = "Duygularını yaz",
+//                    levelRequirement = 1,
+//                    xpReward = 30
+//                )
+//            )
 //        }
-        getAllQuests(QuestOrder.Level(OrderType.Ascending))
+        getAllQuests()
     }
 
     fun onEvent(event: AllQuestsEvent) {
@@ -86,16 +122,17 @@ class AllQuestsViewModel @Inject constructor(
         }
     }
 
-    private fun getAllQuests(questOrder: QuestOrder) {
+    private fun getAllQuests() {
         getAllQuestsJob?.cancel()
         getAllQuestsJob = viewModelScope.launch {
             val profile = profileUseCases.getProfile(1)
 
-            questUseCases.getAllQuests(profile.level, questOrder)
+            questUseCases.getAllQuests()
                 .collect { quests ->
-                    _uiState.update {
+                    _uiState.update { it ->
                         it.copy(
-                            availableQuests = quests
+                            availableQuests = quests.filter { it.levelRequirement <= profile.level },
+                            lockedQuests = quests.filter { it.levelRequirement > profile.level }
                         )
                     }
                 }
