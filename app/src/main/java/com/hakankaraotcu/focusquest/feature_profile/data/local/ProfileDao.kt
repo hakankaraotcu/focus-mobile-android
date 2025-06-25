@@ -5,12 +5,13 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.hakankaraotcu.focusquest.core.domain.model.Profile
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ProfileDao {
 
     @Query("SELECT * FROM profile WHERE id = :id")
-    suspend fun getProfileById(id: Int): Profile?
+    fun getProfileById(id: Int): Flow<Profile?>
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertProfile(profile: Profile)

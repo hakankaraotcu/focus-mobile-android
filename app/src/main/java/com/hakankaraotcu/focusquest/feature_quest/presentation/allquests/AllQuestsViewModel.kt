@@ -2,17 +2,15 @@ package com.hakankaraotcu.focusquest.feature_quest.presentation.allquests
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.hakankaraotcu.focusquest.core.util.OrderType
 import com.hakankaraotcu.focusquest.feature_profile.domain.use_case.ProfileUseCases
 import com.hakankaraotcu.focusquest.feature_quest.domain.model.Quest
 import com.hakankaraotcu.focusquest.feature_quest.domain.use_case.QuestUseCases
-import com.hakankaraotcu.focusquest.feature_quest.domain.util.QuestOrder
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -125,17 +123,21 @@ class AllQuestsViewModel @Inject constructor(
     private fun getAllQuests() {
         getAllQuestsJob?.cancel()
         getAllQuestsJob = viewModelScope.launch {
-            val profile = profileUseCases.getProfile(1)
-
-            questUseCases.getAllQuests()
-                .collect { quests ->
-                    _uiState.update { it ->
-                        it.copy(
-                            availableQuests = quests.filter { it.levelRequirement <= profile.level },
-                            lockedQuests = quests.filter { it.levelRequirement > profile.level }
-                        )
-                    }
+            combine(
+                profileUseCases.getProfile(1),
+                questUseCases.getAllQuests()
+            ) { profile, quests ->
+                val available = quests.filter { it.levelRequirement <= profile.level }
+                val locked = quests.filter { it.levelRequirement > profile.level }
+                Pair(available, locked)
+            }.collect { (available, locked) ->
+                _uiState.update {
+                    it.copy(
+                        availableQuests = available,
+                        lockedQuests = locked
+                    )
                 }
+            }
         }
     }
 }

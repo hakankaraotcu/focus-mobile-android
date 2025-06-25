@@ -53,9 +53,7 @@ fun AllQuestsScreen(
 
         Spacer(Modifier.height(8.dp))
 
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
+        LazyColumn{
             items(uiState.availableQuests, key = { it.id!! }) { quest ->
                 QuestItem(
                     quest = quest,
@@ -77,9 +75,9 @@ fun AllQuestsScreen(
                                 allQuestsViewModel.onEvent(AllQuestsEvent.Take(quest))
                             }
                         }
-
                     }
                 )
+                Spacer(Modifier.height(8.dp))
             }
             if (uiState.lockedQuests.isNotEmpty()) {
                 item {
